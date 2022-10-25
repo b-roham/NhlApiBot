@@ -93,8 +93,18 @@ axios.get(api + "api/v1/schedule").then(async (resp) => {
               .setDescription(
                 `<t:${Math.floor(gmes[i].dateClass.getTime() / 1000)}>`
               )
-              .setFooter("Bot by NotBroham");
-            client.channels.cache.get("1033096707518509076").send(embed);
+            
+            client.channels.cache.get("1034558936893902939").send(embed).then(sentEmbed => {
+                    var home1 = sentEmbed.embeds[0].title.split("@")[1];
+                    var home = home1.replace("Montréal Canadiens","Montreal Canadiens")
+                    var away1 = sentEmbed.embeds[0].title.split("@")[0];
+                    var away = away1.replace("Montréal Canadiens","Montreal Canadiens")
+                    console.log(home + " " + away)
+                    var hm = client.emojis.cache.find(emoji => emoji.name == home.replace(/\s/g, ''))
+                    var aw = client.emojis.cache.find(emoji => emoji.name == away.replace(/\s/g, ''))
+                    sentEmbed.react(aw.id);
+                    sentEmbed.react(hm.id);
+                  });;
           }
           var i2 = bruinsgame ? " 1 of which is a bruins game." : "";
           client.user.setActivity(`There are ${length} NHL games today.${i2}`);
@@ -150,7 +160,17 @@ async function newG() {
                   const embed = new discord.MessageEmbed()
                     .setTitle(`${away} @ ${home}`)
                     .setDescription(`<t:${Math.floor(dte.getTime() / 1000)}>`)
-                  client.channels.cache.get("1033096707518509076").send(embed);
+                  client.channels.cache.get("1034558936893902939").send(embed).then(sentEmbed => {
+                    var home1 = sentEmbed.embeds[0].title.split("@")[1];
+                    var home = home1.replace("Montréal Canadiens","Montreal Canadiens")
+                    var away1 = sentEmbed.embeds[0].title.split("@")[0];
+                    var away = away1.replace("Montréal Canadiens","Montreal Canadiens")
+                    console.log(home + " " + away)
+                    var hm = client.emojis.cache.find(emoji => emoji.name == home.replace(/\s/g, ''))
+                    var aw = client.emojis.cache.find(emoji => emoji.name == away.replace(/\s/g, ''))
+                    sentEmbed.react(aw.id);
+                    sentEmbed.react(hm.id);
+                  });
                 }
               });
             }
