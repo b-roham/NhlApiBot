@@ -39,6 +39,11 @@ function isToday(date) {
 StartApp();
 var length = 0;
 var bruinsgame = false;
+var currbruinsgame = false;
+var id;
+var otherteam = "";
+var bhome = 0;
+var baway = 0;
 client.on("ready", () => {
   client.user.setActivity(`There are ${length} NHL games today.`);
   console.log(
@@ -132,6 +137,71 @@ axios.get(api + "api/v1/schedule").then(async (resp) => {
   });
 });
 
+async function checkScore(gameID) {
+  var homeScore = 0;
+  var awayScore = 0;
+  await axios.get(api + "api/v1/game/" + gameID + "/feed/live").then(async (resp) => {
+    Object.entries(resp.data.liveData.linescore).forEach(async ([key, value]) => {
+      if (key == "teams") {
+        Object.entries(value).forEach(async ([key2, value2]) => {
+          if (key2 == "home") {
+            Object.entries(value2).forEach(async ([key3, value3]) => {
+              if (key3 == "goals") {
+                homeScore = value3;
+              }
+            });
+          }
+          if (key2 == "away") {
+            Object.entries(value2).forEach(async ([key3, value3]) => {
+              if (key3 == "goals") {
+                awayScore = value3;
+              }
+            });
+          }
+        });
+      }
+    });
+  });
+  return [awayScore, homeScore];
+}
+
+async function bruinsPlaying() {
+  var bruinsPlaying = false;
+  var gameid = "";
+  await axios.get(api + "api/v1/schedule").then(async (resp) => {
+    resp.data.dates.forEach(async (obj) => {
+      Object.entries(obj).forEach(async ([key, value]) => {
+        if (key == "games") {
+          value.forEach(async (obj2) => {
+            var home = "";
+            var away = "";
+            var active = false;
+            Object.entries(obj2).forEach(async ([key2, value2]) => {
+              if (key2 == "teams") {
+                away = value2.away.team.name;
+                home = value2.home.team.name;
+              }
+              if (key2 == "status") {
+                if (value2.detailedState == "In Progress") {
+                  active = true;
+                }
+              }
+            });
+            if (active &&home!="" && away!="") {
+              if (home == "Boston Bruins" || away == "Boston Bruins") {
+                bruinsPlaying = true;
+                otherteam = home == "Boston Bruins" ? away : home;
+                gameid = obj2.gamePk;
+              }
+            }
+          });
+        }
+      });
+    });
+  });
+  return bruinsPlaying,gameid;
+}
+
 async function newG() {
   if (started) {
     axios
@@ -201,4 +271,49 @@ async function newG() {
   }
 }
 
+async function brunsG() {
+  var bruinsPlayingd, gameid = await bruinsPlaying();
+  if (bruinsPlayingd) {
+    if (!currbruinsgame) {
+      var thumb = getImgUrl("BostonBruins");
+      const embed = new discord.MessageEmbed()
+              .setTitle(`BRUINS GAME HAS STARTED!`)
+              .setThumbnail(thumb)
+              .setDescription(
+                `The Bruins are playing the ${otherteam}!`
+      )
+      currbruinsgame = true;
+      client.channels.cache.get("1034558936893902939").send(embed);
+    }
+    id = gameid;
+    var score = await checkScore(id);
+    setTimeout(brunsG, 2000);
+    if (score[0] > baway) {
+      baway = score[0];
+      var thumb = getImgUrl(otherteam);
+      const embed = new discord.MessageEmbed()
+        .setTitle(`The ${otherteam} have scored`)
+        .setThumbnail(thumb)
+        .setDescription(`The ${otherteam} have scored boooo`)
+        .addField("Boston Bruins", `${bhome}`, true)
+        .addField(otherteam, `${baway}`, true);
+      client.channels.cache.get("1034558936893902939").send(embed);
+    }
+    if (score[1] > bhome) {
+      baway = score[0];
+      var thumb = getImgUrl("BostonBruins");
+      const embed = new discord.MessageEmbed()
+        .setTitle(`The Bruins have scored!!!`)
+        .setThumbnail(thumb)
+        .setDescription(`The Bruins have scored!!!`)
+        .addField("Boston Bruins", `${bhome}`, true)
+        .addField(otherteam, `${baway}`, true);
+      client.channels.cache.get("1034558936893902939").send(embed);
+    }
+  } else {
+    setTimeout(brunsG, 5000);
+  }
+}
+
 setTimeout(newG, 5000);
+setTimeout(brunsG, 5000);
