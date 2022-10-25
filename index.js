@@ -8,8 +8,21 @@ const client = new discord.Client();
 const token = process.env.TOKEN;
 const api = "https://statsapi.web.nhl.com/";
 var started = false;
+var raw = fs.readFileSync('imgs.json')
+var content = JSON.parse(raw);
 let rawdata = fs.readFileSync("gamestoday.json");
 let team = JSON.parse(rawdata);
+
+async function getImgUrl(name){
+  console.log(name)
+  for (var i = 0; i<content.length;i++ ){ 
+    if (content[i].name == name){
+      console.log(content[i].url)
+      return content[i].url;
+    }
+  }
+  return "";
+}
 
 async function StartApp() {
   await client.login(token);
@@ -83,13 +96,15 @@ axios.get(api + "api/v1/schedule").then(async (resp) => {
         });
         console.log(gmes);
         length = gmes.length;
-        client.once("ready", () => {
+        client.once("ready", async () => {
           for (var i = 0; i < gmes.length; i++) {
             if (gmes[i].awayID == 6 || gmes[i].homeID == 6) {
               bruinsgame = true;
             }
+            var thumb = await getImgUrl(gmes[i].homeTeam.replace(/\s/g, ''))
             const embed = new discord.MessageEmbed()
               .setTitle(`${gmes[i].awayTeam} @ ${gmes[i].homeTeam}`)
+              .setThumbnail(thumb)
               .setDescription(
                 `<t:${Math.floor(gmes[i].dateClass.getTime() / 1000)}>`
               )
