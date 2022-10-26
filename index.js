@@ -3,7 +3,6 @@ const dotenv = require('dotenv');
 const axios = require("axios");
 const fs = require("fs");
 const discord = require("discord.js");
-
 dotenv.config();
 // Variables
 const client = new discord.Client();
@@ -65,7 +64,6 @@ client.on("ready", () => {
     `Ready to serve on ${client.guilds.cache.size} servers, for ${client.users.cache.size} users.`
   );
 });
-
 
 async function gameExists(home, away) {
   for (var i = 0; i < gmes.length; i++) {
@@ -302,7 +300,6 @@ async function newG() {
     setTimeout(newG, 5000);
   }
 }
-
 
 async function brunsG() {
   if (started){
