@@ -19,9 +19,16 @@ var currbruinsgame = false;
 var id;
 var otherteam = "";
 var otherteamid;
+var otherteamrecord;
+var brecord;
 var bhome = 0;
 var baway = 0;
 
+/**
+ * Gets the URL of the image with the given name.       
+ * @param {string} name - the name of the image.       
+ * @returns {string} the URL of the image.       
+ */
 async function getImgUrl(name){
   for (var i = 0; i<content.length;i++ ){ 
     if (content[i].name == name){
@@ -31,21 +38,24 @@ async function getImgUrl(name){
   return "";
 }
 
+/**
+ * Starts the application.
+ * @returns None
+ */
 async function StartApp() {
   await client.login(token);
 }
 
-function isToday(date) {
-  const tdy = new Date();
-  if (date.toDateString() == tdy.toDateString()) {
-    return true;
-  }
-  return false;
-}
-
+/**
+ * Checks if a message with the given title and description has already been sent in the channel.           
+ * @param {Discord.TextChannel} channel - the channel to check for the message in.           
+ * @param {string} title - the title of the message to check for.           
+ * @param {string} description - the description of the message to check for.           
+ * @returns {boolean} - true if the message has already been sent, false otherwise.           
+ */
 async function alreadySent(channel, title,description){
   var sent = false;
-  await channel.messages.fetch({ limit: 40 }).then(messages => {
+  await channel.messages.fetch({ limit: 30 }).then(messages => {
     messages.forEach(async (msg) => {
       await msg;
       if(typeof msg.embeds[0] != "undefined"&& msg.embeds[0].title == title && msg.embeds[0].description == description){
@@ -58,6 +68,10 @@ async function alreadySent(channel, title,description){
 
 StartApp();
 
+/**
+ * Sets the bot's activity to the number of NHL games today.           
+ * @returns None           
+ */
 client.on("ready", () => {
   client.user.setActivity(`There are ${length} NHL games today.`);
   console.log(
@@ -65,6 +79,11 @@ client.on("ready", () => {
   );
 });
 
+/**
+ * Handles the NHL games and sends them to the channel.
+ * Recursively checks for new games every 10 minutes.           
+ * @returns None           
+ */
 async function handleGames() {
   gmes = []
   axios.get(api + "api/v1/schedule").then(async (resp) => {
@@ -122,8 +141,9 @@ async function handleGames() {
                 var hmemoji = await client.emojis.cache.find(emoji => emoji.name === gmes[i].homeTeam.replace(/\s/g, '').replace(".", "").replace("é", "e"));
                 console.log(gmes[i].homeID)
                 var awemoji = await client.emojis.cache.find(emoji => emoji.name === gmes[i].awayTeam.replace(/\s/g, '').replace(".", "").replace("é", "e"));
-                var tm = "#99d9d9";
-                if (gmes[i].homeID != 55) {
+                var tm = (gmes[i].homeID == 54) ? "#B4975A" :"#99d9d9";
+                tm = (gmes[i].homeID == 53) ? "#8C2633":tm;
+                if (gmes[i].homeID != 55 && gmes[i].homeID != 54 && gmes[i].homeID != 53) {
                   tm = teams.default[(gmes[i].homeID - 1)].colors[0];
                 }
                 const embed = new discord.MessageEmbed()
@@ -144,8 +164,8 @@ async function handleGames() {
                     var away = away1.replace("Montréal Canadiens", "Montreal Canadiens").replace(".", "")
                     var hm = client.emojis.cache.find(emoji => emoji.name == home.replace(/\s/g, ''))
                     var aw = client.emojis.cache.find(emoji => emoji.name == away.replace(/\s/g, ''))
-                    sentEmbed.react(aw.id);
                     sentEmbed.react(hm.id);
+                    sentEmbed.react(aw.id);
                   });;
                 }
               }
@@ -162,8 +182,9 @@ async function handleGames() {
               var hmemoji = await client.emojis.cache.find(emoji => emoji.name === gmes[i].homeTeam.replace(/\s/g, '').replace(".", "").replace("é", "e"));
               console.log(gmes[i].homeID)
               var awemoji = await client.emojis.cache.find(emoji => emoji.name === gmes[i].awayTeam.replace(/\s/g, '').replace(".", "").replace("é", "e"));
-              var tm = "#99d9d9";
-              if (gmes[i].homeID != 55) {
+              var tm = (gmes[i].homeID == 54) ? "#B4975A" :"#99d9d9";
+              tm = (gmes[i].homeID == 53) ? "#8C2633":tm;
+              if (gmes[i].homeID != 55 && gmes[i].homeID != 54 && gmes[i].homeID != 53) {
                 tm = teams.default[(gmes[i].homeID - 1)].colors[0];
               }
               const embed = new discord.MessageEmbed()
@@ -200,6 +221,11 @@ async function handleGames() {
 
 handleGames();
 
+/**
+ * Checks the score of the given gameID and returns the away and home scores.           
+ * @param {string} gameID - the gameID of the game to check           
+ * @returns {Promise<[number, number]>} - a promise that resolves to an array of the away and home scores.           
+ */
 async function checkScore(gameID) {
   var homeScore = 0;
   var awayScore = 0;
@@ -228,6 +254,10 @@ async function checkScore(gameID) {
   return [awayScore, homeScore];
 }
 
+/**
+ * Gets the schedule from the API and returns the games that are currently playing, updates based on if the bruins are playing or not.
+ * @returns {Promise<Array<Game>>} A promise that resolves to an array of games that are currently playing.
+ */
 async function bruinsPlaying() {
   await axios.get(api + "api/v1/schedule").then(async (resp) => {
     resp.data.dates.forEach(async (obj) => {
@@ -238,6 +268,8 @@ async function bruinsPlaying() {
             var away = "";
             var homeid;
             var awayid;
+            var aleaguerecord;
+            var hleaguerecord;
             var active = false;
             var final = false;
             Object.entries(obj2).forEach(async ([key2, value2]) => {
@@ -246,7 +278,10 @@ async function bruinsPlaying() {
                 awayid = value2.away.team.id;
                 home = value2.home.team.name;
                 homeid = value2.home.team.id;
+                aleaguerecord = value2.away.leagueRecord.wins + "-" + value2.away.leagueRecord.losses + "-" + value2.away.leagueRecord.ot;
+                hleaguerecord = value2.home.leagueRecord.wins + "-" + value2.home.leagueRecord.losses + "-" + value2.home.leagueRecord.ot;
               }
+              
               if (key2 == "status") {
                 if (value2.detailedState == "In Progress") {
                   active = true;
@@ -260,6 +295,8 @@ async function bruinsPlaying() {
               if (home == "Boston Bruins" || away == "Boston Bruins") {
                 otherteam = home == "Boston Bruins" ? away : home;
                 otherteamid = home == "Boston Bruins" ? awayid : homeid;
+                otherteamrecord = home == "Boston Bruins" ? aleaguerecord : hleaguerecord;
+                brecord = home == "Boston Bruins" ? hleaguerecord : aleaguerecord;
                 bgame = true;
                 gameid = obj2.gamePk;
               }
@@ -300,6 +337,10 @@ async function bruinsPlaying() {
   });
 }
 
+/**
+ * Checks if the game has started yet. If it has, it will send a message to the channel.
+ * @returns None
+ */
 async function brunsG() {
   if (started){
     await bruinsPlaying();
@@ -307,12 +348,13 @@ async function brunsG() {
       if (!currbruinsgame) {
         var thumb = await getImgUrl("Boston Bruins".replace(/\s/g, ''));
         const embed = new discord.MessageEmbed()
-                .setTitle(`Bruins game has started!`)
-                .setDescription(
-                  `The Bruins are playing the ${otherteam}!`)
-                .setThumbnail(thumb)
-                .setColor(0xFFB81C)
-                .setTimestamp();
+          .setTitle(`Bruins game has started!`)
+          .setDescription(`The Bruins are playing the ${otherteam}!`)
+          .addField("Boston Bruins", `(${brecord})`, true)
+          .addField(otherteam, `(${otherteamrecord})`, true)
+          .setThumbnail(thumb)
+          .setColor(0xFFB81C)
+          .setTimestamp();
         currbruinsgame = true;
         if (!await alreadySent(client.channels.cache.get("1035253775000162374"),embed.title,embed.description)){
           client.channels.cache.get("1035253775000162374").send(embed);
@@ -324,9 +366,10 @@ async function brunsG() {
       if (score[0] > baway) {
         baway = score[0];
         var thumb = await getImgUrl(otherteam.replace(/\s/g, ''));
-        var tm = "#99d9d9";
-        if (otherteamid != 55){
-          tm = teams.default[(otherteamid-1)].colors[0];
+        var tm = (otherteamid == 54) ? "#B4975A" :"#99d9d9";
+        tm = (otherteamid == 53) ? "#8C2633":tm;
+        if (otherteamid != 55 && otherteamid != 54 && otherteamid != 53) {
+          tm = teams.default[(otherteamid - 1)].colors[0];
         }
         const embed = new discord.MessageEmbed()
           .setTitle(`The ${otherteam} have scored`)
@@ -361,6 +404,11 @@ async function brunsG() {
   }
 }
 var standings = []; 
+/**
+ * Gets the standings from the API and updates the standings channel.
+ * Recursively calls itself every 5 minutes after recieving a response from the API.           
+ * @returns None           
+ */
 async function getStandings() {
   if (started) {
     await axios.get(api + "api/v1/standings").then(async (resp) => {
@@ -444,6 +492,5 @@ async function getStandings() {
   }
 }
 
-getStandings();
-
+setTimeout(getStandings,5000);
 setTimeout(brunsG, 5000);
