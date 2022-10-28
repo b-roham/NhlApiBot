@@ -18,6 +18,7 @@ var bruinsgame = false;
 var currbruinsgame = false;
 var id;
 var otherteam = "";
+var otherteamid;
 var bhome = 0;
 var baway = 0;
 
@@ -111,46 +112,86 @@ async function handleGames() {
             }
           });
           length = gmes.length;
-          client.once("ready", async () => {
+          if (!started) {
+            client.once("ready", async () => {
+              for (var i = 0; i < gmes.length; i++) {
+                if (gmes[i].awayID == 6 || gmes[i].homeID == 6) {
+                  bruinsgame = true;
+                }
+                var thumb = await getImgUrl(gmes[i].homeTeam.replace(/\s/g, ''))
+                var hmemoji = await client.emojis.cache.find(emoji => emoji.name === gmes[i].homeTeam.replace(/\s/g, '').replace(".", "").replace("é", "e"));
+                console.log(gmes[i].homeID)
+                var awemoji = await client.emojis.cache.find(emoji => emoji.name === gmes[i].awayTeam.replace(/\s/g, '').replace(".", "").replace("é", "e"));
+                var tm = "#99d9d9";
+                if (gmes[i].homeID != 55) {
+                  tm = teams.default[(gmes[i].homeID - 1)].colors[0];
+                }
+                const embed = new discord.MessageEmbed()
+                  .setTitle(`${gmes[i].awayTeam} @ ${gmes[i].homeTeam}`)
+                  .setThumbnail(thumb)
+                  .setDescription(
+                    `<t:${Math.floor(gmes[i].dateClass.getTime() / 1000)}>`
+                  )
+                  .setColor(tm)
+                  .addField("Home Team", `${hmemoji}${gmes[i].homeTeam} (${gmes[i].homeRecord})`, true)
+                  .addField("Away Team", `${awemoji}${gmes[i].awayTeam} (${gmes[i].awayRecord})`, true)
+                  ;
+                if (!await alreadySent(client.channels.cache.get("1035253775000162374"), embed.title, embed.description)) {
+                  client.channels.cache.get("1035253775000162374").send(embed).then(sentEmbed => {
+                    var home1 = sentEmbed.embeds[0].title.split("@")[1];
+                    var home = home1.replace("Montréal Canadiens", "Montreal Canadiens").replace(".", "");
+                    var away1 = sentEmbed.embeds[0].title.split("@")[0];
+                    var away = away1.replace("Montréal Canadiens", "Montreal Canadiens").replace(".", "")
+                    var hm = client.emojis.cache.find(emoji => emoji.name == home.replace(/\s/g, ''))
+                    var aw = client.emojis.cache.find(emoji => emoji.name == away.replace(/\s/g, ''))
+                    sentEmbed.react(aw.id);
+                    sentEmbed.react(hm.id);
+                  });;
+                }
+              }
+              var i2 = bruinsgame ? " 1 of which is a bruins game." : "";
+              client.user.setActivity(`There are ${length} NHL games today.${i2}`);
+              started = true;
+            });
+          } else { 
             for (var i = 0; i < gmes.length; i++) {
               if (gmes[i].awayID == 6 || gmes[i].homeID == 6) {
                 bruinsgame = true;
               }
               var thumb = await getImgUrl(gmes[i].homeTeam.replace(/\s/g, ''))
-              var hmemoji = await client.emojis.cache.find(emoji => emoji.name === gmes[i].homeTeam.replace(/\s/g, '').replace(".","").replace("é","e"));
+              var hmemoji = await client.emojis.cache.find(emoji => emoji.name === gmes[i].homeTeam.replace(/\s/g, '').replace(".", "").replace("é", "e"));
               console.log(gmes[i].homeID)
               var awemoji = await client.emojis.cache.find(emoji => emoji.name === gmes[i].awayTeam.replace(/\s/g, '').replace(".", "").replace("é", "e"));
               var tm = "#99d9d9";
-              if (gmes[i].homeID != 55){
-                tm = teams.default[(gmes[i].homeID-1)].colors[0];
+              if (gmes[i].homeID != 55) {
+                tm = teams.default[(gmes[i].homeID - 1)].colors[0];
               }
               const embed = new discord.MessageEmbed()
                 .setTitle(`${gmes[i].awayTeam} @ ${gmes[i].homeTeam}`)
                 .setThumbnail(thumb)
                 .setDescription(
                   `<t:${Math.floor(gmes[i].dateClass.getTime() / 1000)}>`
-              )
+                )
                 .setColor(tm)
                 .addField("Home Team", `${hmemoji}${gmes[i].homeTeam} (${gmes[i].homeRecord})`, true)
                 .addField("Away Team", `${awemoji}${gmes[i].awayTeam} (${gmes[i].awayRecord})`, true)
                 ;
               if (!await alreadySent(client.channels.cache.get("1035253775000162374"), embed.title, embed.description)) {
                 client.channels.cache.get("1035253775000162374").send(embed).then(sentEmbed => {
-                        var home1 = sentEmbed.embeds[0].title.split("@")[1];
-                        var home = home1.replace("Montréal Canadiens","Montreal Canadiens").replace(".","");
-                        var away1 = sentEmbed.embeds[0].title.split("@")[0];
-                        var away = away1.replace("Montréal Canadiens","Montreal Canadiens").replace(".","")
-                        var hm = client.emojis.cache.find(emoji => emoji.name == home.replace(/\s/g, ''))
-                        var aw = client.emojis.cache.find(emoji => emoji.name == away.replace(/\s/g, ''))
-                        sentEmbed.react(aw.id);
-                        sentEmbed.react(hm.id);
-                  });;
+                  var home1 = sentEmbed.embeds[0].title.split("@")[1];
+                  var home = home1.replace("Montréal Canadiens", "Montreal Canadiens").replace(".", "");
+                  var away1 = sentEmbed.embeds[0].title.split("@")[0];
+                  var away = away1.replace("Montréal Canadiens", "Montreal Canadiens").replace(".", "")
+                  var hm = client.emojis.cache.find(emoji => emoji.name == home.replace(/\s/g, ''))
+                  var aw = client.emojis.cache.find(emoji => emoji.name == away.replace(/\s/g, ''))
+                  sentEmbed.react(aw.id);
+                  sentEmbed.react(hm.id);
+                });;
               }
             }
             var i2 = bruinsgame ? " 1 of which is a bruins game." : "";
             client.user.setActivity(`There are ${length} NHL games today.${i2}`);
-            started = true;
-          });
+          }
         }
       });
     });
@@ -195,12 +236,16 @@ async function bruinsPlaying() {
           value.forEach(async (obj2) => {
             var home = "";
             var away = "";
+            var homeid;
+            var awayid;
             var active = false;
             var final = false;
             Object.entries(obj2).forEach(async ([key2, value2]) => {
               if (key2 == "teams") {
                 away = value2.away.team.name;
+                awayid = value2.away.team.id;
                 home = value2.home.team.name;
+                homeid = value2.home.team.id;
               }
               if (key2 == "status") {
                 if (value2.detailedState == "In Progress") {
@@ -214,6 +259,7 @@ async function bruinsPlaying() {
             if (active) {
               if (home == "Boston Bruins" || away == "Boston Bruins") {
                 otherteam = home == "Boston Bruins" ? away : home;
+                otherteamid = home == "Boston Bruins" ? awayid : homeid;
                 bgame = true;
                 gameid = obj2.gamePk;
               }
@@ -222,11 +268,22 @@ async function bruinsPlaying() {
               if (currbruinsgame) {
                 currbruinsgame = false;
                 var score = await checkScore(gameid);
-                var desc = (score[0] > score[1] ? "lost" : "won") + " " + score[0] + "-" + score[1] + " against the " + otherteam;
-
+                var desc = "The Boston Bruins have "+(score[0] > score[1] ? "lost" : "won") + " " + score[0] + "-" + score[1] + " against the " + otherteam + (score[0] > score[1] ? ". D: :( ;-(" : "! :D :D :D");
+                var thumb = await getImgUrl(((score[0] > score[1] ? otherteam : "Boston Bruins")).replace(/\s/g, ''));
+                var tm = teams.default[(6 - 1)].colors[0];
+                if (otherteamid != 55) {
+                  tm = (score[0] > score[1] ? teams.default[(otherteamid - 1)].colors[0] : teams.default[(6 - 1)].colors[0]);
+                } else {
+                  if (score[0] > score[1]) {
+                    tm = "#99d9d9";
+                  }
+                }
+                
                 const embed = new discord.MessageEmbed()
                   .setTitle("Bruins game has ended")
                   .setDescription(desc)
+                  .setThumbnail(thumb)
+                  .setColor(tm)
                   .addField("Boston Bruins", `${bhome}`, false)
                   .addField(otherteam, `${baway}`, false);
                   if (!await alreadySent(client.channels.cache.get("1035253775000162374"),embed.title,embed.description)){
@@ -250,11 +307,12 @@ async function brunsG() {
       if (!currbruinsgame) {
         var thumb = await getImgUrl("Boston Bruins".replace(/\s/g, ''));
         const embed = new discord.MessageEmbed()
-                .setTitle(`BRUINS GAME HAS STARTED!`)
+                .setTitle(`Bruins game has started!`)
                 .setDescription(
                   `The Bruins are playing the ${otherteam}!`)
                 .setThumbnail(thumb)
-                .setColor(0xFFB81C);
+                .setColor(0xFFB81C)
+                .setTimestamp();
         currbruinsgame = true;
         if (!await alreadySent(client.channels.cache.get("1035253775000162374"),embed.title,embed.description)){
           client.channels.cache.get("1035253775000162374").send(embed);
@@ -266,10 +324,15 @@ async function brunsG() {
       if (score[0] > baway) {
         baway = score[0];
         var thumb = await getImgUrl(otherteam.replace(/\s/g, ''));
+        var tm = "#99d9d9";
+        if (otherteamid != 55){
+          tm = teams.default[(otherteamid-1)].colors[0];
+        }
         const embed = new discord.MessageEmbed()
           .setTitle(`The ${otherteam} have scored`)
           .setDescription(`The ${otherteam} have scored boooo ${bhome}-${baway}`)
           .setThumbnail(thumb)
+          .setColor(tm)
           .addField("Boston Bruins", `${bhome}`, false)
           .addField(otherteam, `${baway}`, false);
         if (!await alreadySent(client.channels.cache.get("1035253775000162374"),embed.title,embed.description)){
