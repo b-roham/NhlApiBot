@@ -6,7 +6,7 @@ const discord = require("discord.js");
 const teams = require("@nhl-api/teams");
 const internal = require('stream');
 const e = require('express');
-const check = require("./checkScore.js");
+const check = require("./src/checkScore.js");
 // Variables
 const client = new discord.Client();
 const token = process.env.TOKEN;
