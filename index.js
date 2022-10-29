@@ -282,7 +282,9 @@ async function checkScore(gameID) {
           .setColor(0xFFB81C)
           .setFooter("Game ID: " + gameID + ` ${bhome}-${baway}`)
           .setTimestamp();
-        client.channels.cache.get("1035253775000162374").send(embed);
+        if (!await alreadySent(client.channels.cache.get("1035253775000162374"), embed.title, embed.description)) { 
+          client.channels.cache.get("1035253775000162374").send(embed);
+        }
       }
     }
     Object.entries(resp.data.liveData.linescore).forEach(async ([key, value]) => {
