@@ -6,6 +6,7 @@ const discord = require("discord.js");
 const teams = require("@nhl-api/teams");
 const internal = require('stream');
 const e = require('express');
+const check = require("./checkScore.js");
 // Variables
 const client = new discord.Client();
 const token = process.env.TOKEN;
@@ -250,78 +251,6 @@ async function handleGames() {
 
 handleGames();
 
-/**
- * Checks the score of the given gameID and returns the away and home scores.           
- * @param {string} gameID - the gameID of the game to check           
- * @returns {Promise<[number, number, number, string, string]>} - a promise that resolves to an array of the away and home scores, the current period, the ordinal of the period, and the time remaining in the period.           
- */
-async function checkScore(gameID) {
-  var homeScore = 0;
-  var awayScore = 0;
-  var currentPeriod;
-  var currentPeriodOrdinal;
-  var currentPeriodTimeRemaining;
-  
-  await axios.get(api + "api/v1/game/" + gameID + "/feed/live").then(async (resp) => {
-    var data = resp.data;
-    currentPeriod = data.liveData.linescore.currentPeriod;
-    currentPeriodOrdinal = data.liveData.linescore.currentPeriodOrdinal;
-    currentPeriodTimeRemaining = data.liveData.linescore.currentPeriodTimeRemaining;
-    if (periodState == "") {
-      periodState = currentPeriodTimeRemaining;
-    } else if (periodState != currentPeriodTimeRemaining) { 
-      periodState = currentPeriodTimeRemaining;
-      if (currentPeriodTimeRemaining != "END") { 
-        var thumb = getImgUrl("Boston Bruins".replace(/\s/g, ''));
-        const embed = new discord.MessageEmbed()
-          .setTitle(`Period has started!`)
-          .setDescription(`The ${currentPeriodOrdinal} period has started!`)
-          .addField("Boston Bruins", `${bhome}`, true)
-          .addField(otherteam, `${baway}`, true)
-          .setThumbnail(thumb)
-          .setColor(0xFFB81C)
-          .setFooter("Game ID: " + gameID + ` ${bhome}-${baway}`)
-          .setTimestamp();
-        if (!await alreadySent(client.channels.cache.get("1035253775000162374"), embed.title, embed.description)) { 
-          client.channels.cache.get("1035253775000162374").send(embed);
-        }
-      }
-    }
-    Object.entries(resp.data.liveData.linescore).forEach(async ([key, value]) => {
-      if (key == "teams") {
-        Object.entries(value).forEach(async ([key2, value2]) => {
-          if (key2 == "home") {
-            var team = value2.team.name;
-            //console.log(team)
-            Object.entries(value2).forEach(async ([key3, value3]) => {
-              if (key3 == "goals") {
-                if (team == "Boston Bruins") {
-                  homeScore = value3;
-                } else {
-                  awayScore = value3;
-                }
-              }
-            });
-          }
-          if (key2 == "away") {
-            var team = value2.team.name;
-            //console.log(team)
-            Object.entries(value2).forEach(async ([key3, value3]) => {
-              if (key3 == "goals") {
-                if (team == "Boston Bruins") {
-                  homeScore = value3;
-                } else {
-                  awayScore = value3;
-                }
-              }
-            });
-          }
-        });
-      }
-    });
-  });
-  return [awayScore, homeScore, currentPeriod, currentPeriodOrdinal, currentPeriodTimeRemaining];
-}
 
 /**
  * Gets the schedule from the API and returns the games that are currently playing, updates based on if the bruins are playing or not.
@@ -374,7 +303,7 @@ async function bruinsPlaying() {
                 bgame = false;
                 if (currbruinsgame) {
                   currbruinsgame = false;
-                  var score = await checkScore(gameid);
+                  var score = await check.checkScore(gameid);
                   var desc = "The Boston Bruins have "+(score[0] > score[1] ? "lost" : "won") + " " + score[0] + "-" + score[1] + " against the " + otherteam + (score[0] > score[1] ? ". D: :( ;-(" : "! :D :D :D");
                   var thumb = getImgUrl(((score[0] > score[1] ? otherteam : "Boston Bruins")).replace(/\s/g, ''));
                   var tm = teams.default[(6 - 1)].colors[0];
@@ -432,11 +361,11 @@ async function brunsG() {
         }
       }
       id = gameid;
-      var score = await checkScore(id);
+      var score = await check.checkScore(id);
       //console.log(score);
       setTimeout(brunsG, 2000);
-      if (score[0] != baway) {
-        baway = score[0];
+      if (score[1] != baway) {
+        baway = score[1];
         var thumb = getImgUrl(otherteam.replace(/\s/g, ''));
         var tm = (otherteamid == 54) ? "#B4975A" :"#99d9d9";
         tm = (otherteamid == 53) ? "#8C2633":tm;
@@ -458,8 +387,8 @@ async function brunsG() {
             client.channels.cache.get("1035253775000162374").send(embed);
           }
       }
-      if (score[1] != bhome) {
-        bhome = score[1];
+      if (score[0] != bhome) {
+        bhome = score[0];
         var thumb = getImgUrl("Boston Bruins".replace(/\s/g, ''));
         const embed = new discord.MessageEmbed()
           .setTitle(`The Bruins have scored!!!`)
