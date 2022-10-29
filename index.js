@@ -5,6 +5,7 @@ const fs = require("fs");
 const discord = require("discord.js");
 const teams = require("@nhl-api/teams");
 const internal = require('stream');
+const e = require('express');
 // Variables
 const client = new discord.Client();
 const token = process.env.TOKEN;
@@ -25,6 +26,7 @@ var otherteamrecord;
 var brecord;
 var bhome = 0;
 var baway = 0;
+var periodState = "";
 
 /**
  * Gets the URL of the image with the given name.       
@@ -56,12 +58,25 @@ async function StartApp() {
  * @param {string} footer - the footer of the message to check for.           
  * @returns {promise<boolean>} - resolves with a boolean true if the message has already been sent, false otherwise.           
  */
-async function alreadySent(channel, title,description,footer){
+async function alreadySent(channel, title,description){
   var sent = false;
   await channel.messages.fetch({ limit: 30 }).then(messages => {
     messages.forEach(async (msg) => {
       await msg;
-      if(typeof msg.embeds[0] != "undefined" && msg.embeds[0].title == title && msg.embeds[0].description == description || (msg.embeds[0].footer == footer && footer!="")){
+      if(typeof msg.embeds[0] != "undefined" && msg.embeds[0].title == title && msg.embeds[0].description == description){
+        sent = true;
+      }
+    });
+  });
+  return sent;
+}
+
+async function alreadySentwithFooter(channel, title, description, footer) { 
+  var sent = false;
+  await channel.messages.fetch({ limit: 30 }).then(messages => {
+    messages.forEach(async (msg) => {
+      await msg;
+      if (typeof msg.embeds[0] != "undefined" && msg.embeds[0].footer != null &&msg.embeds[0].title == title && msg.embeds[0].description == description && msg.embeds[0].footer.text == footer) {
         sent = true;
       }
     });
@@ -164,11 +179,11 @@ async function handleGames() {
                   ;
                 if (gmes[i].homeID == 6 || gmes[i].awayID == 6) {
                   const dm = await client.users.cache.get(process.env.MY_ID).createDM();
-                  if (!await alreadySent(dm, embed.title, embed.description,embed.footer)) { 
+                  if (!await alreadySent(dm, embed.title, embed.description)) { 
                     dm.send(embed);
                   }
                 }
-                if (!await alreadySent(client.channels.cache.get("1035253775000162374"), embed.title, embed.description,embed.footer)) {
+                if (!await alreadySent(client.channels.cache.get("1035253775000162374"), embed.title, embed.description)) {
                   client.channels.cache.get("1035253775000162374").send(embed).then(sentEmbed => {
                     var home1 = sentEmbed.embeds[0].title.split("@")[1];
                     var home = home1.replace("Montréal Canadiens", "Montreal Canadiens").replace(".", "");
@@ -211,7 +226,7 @@ async function handleGames() {
                 .addField("Home Team", `${hmemoji}${gmes[i].homeTeam} (${gmes[i].homeRecord})`, true)
                 .addField("Away Team", `${awemoji}${gmes[i].awayTeam} (${gmes[i].awayRecord})`, true)
                 ;
-              if (!await alreadySent(client.channels.cache.get("1035253775000162374"), embed.title, embed.description,embed.footer)) {
+              if (!await alreadySent(client.channels.cache.get("1035253775000162374"), embed.title, embed.description)) {
                 client.channels.cache.get("1035253775000162374").send(embed).then(sentEmbed => {
                   var home1 = sentEmbed.embeds[0].title.split("@")[1];
                   var home = home1.replace("Montréal Canadiens", "Montreal Canadiens").replace(".", "");
@@ -246,25 +261,56 @@ async function checkScore(gameID) {
   var currentPeriod;
   var currentPeriodOrdinal;
   var currentPeriodTimeRemaining;
+  
   await axios.get(api + "api/v1/game/" + gameID + "/feed/live").then(async (resp) => {
     var data = resp.data;
     currentPeriod = data.liveData.linescore.currentPeriod;
     currentPeriodOrdinal = data.liveData.linescore.currentPeriodOrdinal;
     currentPeriodTimeRemaining = data.liveData.linescore.currentPeriodTimeRemaining;
+    if (periodState == "") {
+      periodState = currentPeriodTimeRemaining;
+    } else if (periodState != currentPeriodTimeRemaining) { 
+      periodState = currentPeriodTimeRemaining;
+      if (currentPeriodTimeRemaining != "END") { 
+        var thumb = getImgUrl("Boston Bruins".replace(/\s/g, ''));
+        const embed = new discord.MessageEmbed()
+          .setTitle(`Period has started!`)
+          .setDescription(`The ${currentPeriodOrdinal} period has started!`)
+          .addField("Boston Bruins", `${bhome}`, true)
+          .addField(otherteam, `${baway}`, true)
+          .setThumbnail(thumb)
+          .setColor(0xFFB81C)
+          .setFooter("Game ID: " + gameID + ` ${bhome}-${baway}`)
+          .setTimestamp();
+        client.channels.cache.get("1035253775000162374").send(embed);
+      }
+    }
     Object.entries(resp.data.liveData.linescore).forEach(async ([key, value]) => {
       if (key == "teams") {
         Object.entries(value).forEach(async ([key2, value2]) => {
           if (key2 == "home") {
+            var team = value2.team.name;
+            console.log(team)
             Object.entries(value2).forEach(async ([key3, value3]) => {
               if (key3 == "goals") {
-                homeScore = value3;
+                if (team == "Boston Bruins") {
+                  homeScore = value3;
+                } else {
+                  awayScore = value3;
+                }
               }
             });
           }
           if (key2 == "away") {
+            var team = value2.team.name;
+            console.log(team)
             Object.entries(value2).forEach(async ([key3, value3]) => {
               if (key3 == "goals") {
-                awayScore = value3;
+                if (team == "Boston Bruins") {
+                  homeScore = value3;
+                } else {
+                  awayScore = value3;
+                }
               }
             });
           }
@@ -344,7 +390,7 @@ async function bruinsPlaying() {
                   .setColor(tm)
                   .addField("Boston Bruins", `${bhome}`, false)
                   .addField(otherteam, `${baway}`, false);
-                  if (!await alreadySent(client.channels.cache.get("1035253775000162374"),embed.title,embed.description,embed.footer)){
+                  if (!await alreadySent(client.channels.cache.get("1035253775000162374"),embed.title,embed.description)){
                     client.channels.cache.get("1035253775000162374").send(embed);
                   }
                 baway = 0;
@@ -377,14 +423,15 @@ async function brunsG() {
           .setColor(0xFFB81C)
           .setTimestamp();
         currbruinsgame = true;
-        if (!await alreadySent(client.channels.cache.get("1035253775000162374"),embed.title,embed.description,embed.footer)){
+        if (!await alreadySent(client.channels.cache.get("1035253775000162374"),embed.title,embed.description)){
           client.channels.cache.get("1035253775000162374").send(embed);
         }
       }
       id = gameid;
       var score = await checkScore(id);
+      console.log(score);
       setTimeout(brunsG, 2000);
-      if (score[0] > baway) {
+      if (score[0] != baway) {
         baway = score[0];
         var thumb = getImgUrl(otherteam.replace(/\s/g, ''));
         var tm = (otherteamid == 54) ? "#B4975A" :"#99d9d9";
@@ -399,14 +446,15 @@ async function brunsG() {
           .setColor(tm)
           .addField("Boston Bruins", `${bhome}`, false)
           .addField(otherteam, `${baway}`, false)
-          .addField("Period", `${score[2]}`, true)
-          .addField("Time left", `${score[3]}`, true)
-          .setFooter(score[3]);
-        if (!await alreadySent(client.channels.cache.get("1035253775000162374"),embed.title,embed.description,embed.footer)){
-          client.channels.cache.get("1035253775000162374").send(embed);
-        }
+          .addField("Period", `${score[3]}`, true)
+          .addField("Time left", `${score[4]}`, true)
+          .setFooter("Game ID: " + id + ` ${bhome}-${baway}`)
+          .setTimestamp();
+          if (!await alreadySentwithFooter(client.channels.cache.get("1035253775000162374"),embed.title,embed.description,embed.footer.text)){
+            client.channels.cache.get("1035253775000162374").send(embed);
+          }
       }
-      if (score[1] > bhome) {
+      if (score[1] != bhome) {
         bhome = score[1];
         var thumb = getImgUrl("Boston Bruins".replace(/\s/g, ''));
         const embed = new discord.MessageEmbed()
@@ -415,10 +463,12 @@ async function brunsG() {
           .setThumbnail(thumb)
           .addField("Boston Bruins", `${bhome}`, false)
           .addField(otherteam, `${baway}`, false)
-          .addField("Period", `${score[2]}`, true)
-          .addField("Time left", `${score[3]}`, true)
-          .setColor(0xFFB81C);
-        if (!await alreadySent(client.channels.cache.get("1035253775000162374"),embed.title,embed.description,embed.footer)){
+          .addField("Period", `${score[3]}`, true)
+          .addField("Time left", `${score[4]}`, true)
+          .setColor(0xFFB81C)
+          .setFooter("Game ID: " + id + ` ${bhome}-${baway}`)
+          .setTimestamp();
+        if (!await alreadySentwithFooter(client.channels.cache.get("1035253775000162374"),embed.title,embed.description,embed.footer.text)){
           client.channels.cache.get("1035253775000162374").send(embed);
         }
       }
