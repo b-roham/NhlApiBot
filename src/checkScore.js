@@ -1,14 +1,15 @@
-const axios = require('axios');
+import axios from 'axios';
+const get = axios.get;
 const api = "https://statsapi.web.nhl.com/";
 
-module.exports.checkScore = async function checkScore(gameID) {
+export async function checkScore(gameID) {
     var homeScore = 0;
     var awayScore = 0;
     var currentPeriod;
     var currentPeriodOrdinal;
     var currentPeriodTimeRemaining;
     
-    await axios.get(api + "api/v1/game/" + gameID + "/feed/live").then(async (resp) => {
+    await get(api + "api/v1/game/" + gameID + "/feed/live").then(async (resp) => {
       var data = resp.data;
       currentPeriod = data.liveData.linescore.currentPeriod;
       currentPeriodOrdinal = data.liveData.linescore.currentPeriodOrdinal;

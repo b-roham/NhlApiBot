@@ -3,6 +3,7 @@
   "version": "1.0.1",
   "description": "A node app to monitor NHL games for the current day as well as the score of bruins games.",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node index.js"
   },
