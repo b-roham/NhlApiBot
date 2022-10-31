@@ -9,7 +9,6 @@ import { client, api } from '../index.js';
  * @returns None           
  */
 export async function getStandings() {
-    console.log("Updating standings...");
     var standings = [];
     await get(api + "api/v1/standings").then(async (resp) => {
         setTimeout(getStandings, 300000);
