@@ -65,7 +65,7 @@ export async function alreadySent(channel, title,description){
  * @param {string} title - the title of the message to check for.           
  * @param {string} description - the description of the message to check for.           
  * @param {string} footer - the footer of the message to check for.           
- * @returns {boolean} - whether or not the message has already been sent.           
+ * @returns {promise<boolean>} - whether or not the message has already been sent.           
  */
 export async function alreadySentwithFooter(channel, title, description, footer) { 
   var sent = false;
@@ -79,16 +79,9 @@ export async function alreadySentwithFooter(channel, title, description, footer)
   });
   return sent;
 }
-/**
- * Sets the bot's activity to the number of NHL games today.           
- * @returns None           
- */
+
 client.once("ready", () => {
-  client.user.setActivity(`There are ${length} NHL games today.`);
-  console.log(
-    `Ready to serve on ${client.guilds.cache.size} servers, for ${client.users.cache.size} users.`
-  );
-  handleGames();
+  handleGames(); 
   setTimeout(getStandings, 2000);
   setTimeout(BruinsGame, 2000)
 });

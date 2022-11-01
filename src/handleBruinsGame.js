@@ -14,7 +14,6 @@ var otherteamrecord;
 var brecord;
 var bhome = 0;
 var baway = 0;
-
 /**
  * Gets the schedule from the API and updates variables accordingly.
  * @returns None 

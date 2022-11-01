@@ -1,20 +1,19 @@
 // Dependancies
-import axios from "axios";
-const get = axios.get;
+import axios from "axios"; // Doesnt support import { } from syntax
+const get = axios.get; // Since I cant just import { get } from 'axios' I have to do this
 import { MessageEmbed } from "discord.js";
 import { getTeamfromID } from "./getTeam.js";
 import { client, getImgUrl, alreadySent, api } from "../index.js";
 // Variables
-var gmes = [];
 var length = 0;
 var bruinsgame = false;
 /**
  * Handles the NHL games and sends them to the channel.
- * Recursively checks for new games every 10 minutes.           
+ * Recursively checks for new games every 10 minutes, sends them to the discord channel if they are new.           
  * @returns None           
  */
 export async function handleGames() {
-    gmes = []
+    var gmes = []
     get(api + "api/v1/schedule").then(async (resp) => {
         setTimeout(handleGames, 600000);
         resp.data.dates.forEach(async (obj) => {
