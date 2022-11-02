@@ -3,6 +3,7 @@ const get = axios.get;
 import { MessageEmbed } from 'discord.js';
 import { client, getImgUrl, alreadySent, alreadySentwithFooter,api } from "../index.js";
 import { checkScore } from './checkScore.js';
+import {getTeamfromID} from './getTeam.js'
 var gameid;
 var gmes = [];
 var bgame = false;
@@ -126,8 +127,8 @@ export async function BruinsGame() {
             baway = score[1];
             var thumb = getImgUrl(otherteam.replace(/\s/g, ''));
             var tm = "#99d9d9";
-            if (gmes[i].homeID != 55) {
-                tm = getTeamfromID(gmes[i].homeID).colors[0];
+            if (otherteamid != 55) {
+                tm = getTeamfromID(otherteamid).colors[0];
             }
             const embed = new MessageEmbed()
                 .setTitle(`The ${otherteam} have scored`)
@@ -137,7 +138,7 @@ export async function BruinsGame() {
                 .addField("Boston Bruins", `${bhome}`, false)
                 .addField(otherteam, `${baway}`, false)
                 .addField("Period", `${score[3]}`, true)
-                .addField("Time left", `${score[4]}`, true)
+                .addField("Time in Period", `${score[4]}`, true)
                 .setFooter("Game ID: " + id + ` ${bhome}-${baway}`)
                 .setTimestamp();
             if (!await alreadySentwithFooter(client.channels.cache.get("1035253775000162374"), embed.title, embed.description, embed.footer.text)) {
@@ -154,7 +155,7 @@ export async function BruinsGame() {
                 .addField("Boston Bruins", `${bhome}`, false)
                 .addField(otherteam, `${baway}`, false)
                 .addField("Period", `${score[3]}`, true)
-                .addField("Time left", `${score[4]}`, true)
+                .addField("Time in Period", `${score[4]}`, true)
                 .setColor(0xFFB81C)
                 .setFooter("Game ID: " + id + ` ${bhome}-${baway}`)
                 .setTimestamp();
