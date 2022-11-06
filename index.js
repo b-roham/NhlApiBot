@@ -10,7 +10,7 @@ import { handleGames } from './src/handleGames.js';
 /**
  * @type {discord.Client} - The discord.js client.
  */
-export const client = new Client();
+export const client = new Client({intents : 62987});
 const token = process.env.TOKEN;
 /**
  * @type {string} The URL of the NHL stats API.       
@@ -51,7 +51,7 @@ export async function alreadySent(channel, title,description){
   await channel.messages.fetch({ limit: 30 }).then(messages => {
     messages.forEach(async (msg) => {
       await msg;
-      if(typeof msg.embeds[0] != "undefined" && msg.embeds[0].title == title && msg.embeds[0].description == description){
+      if(typeof msg.embeds[0] != "undefined" && msg.embeds[0].data.title == title && msg.embeds[0].data.description == description){
         sent = true;
       }
     });
@@ -72,7 +72,7 @@ export async function alreadySentwithFooter(channel, title, description, footer)
   await channel.messages.fetch({ limit: 30 }).then(messages => {
     messages.forEach(async (msg) => {
       await msg;
-      if (typeof msg.embeds[0] != "undefined" && msg.embeds[0].footer != null &&msg.embeds[0].title == title && msg.embeds[0].description == description && msg.embeds[0].footer.text == footer) {
+      if (typeof msg.embeds[0] != "undefined" && msg.embeds[0].footer != null &&msg.embeds[0].data.title == title && msg.embeds[0].data.description == description && msg.embeds[0].footer.text == footer) {
         sent = true;
       }
     });

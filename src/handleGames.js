@@ -1,7 +1,7 @@
 // Dependancies
 import axios from "axios"; // Doesnt support import { } from syntax
 const get = axios.get; // Since I cant just import { get } from 'axios' I have to do this
-import { MessageEmbed } from "discord.js";
+import { EmbedBuilder } from "discord.js";
 import { getTeamfromID } from "./getTeam.js";
 import { client, getImgUrl, alreadySent, api } from "../index.js";
 // Variables
@@ -61,6 +61,7 @@ export async function handleGames() {
                         }
                     });
                     length = gmes.length;
+                    bruinsgame = false;
                     for (var i = 0; i < gmes.length; i++) {
                         if (gmes[i].awayID == 6 || gmes[i].homeID == 6) {
                             bruinsgame = true;
@@ -72,18 +73,19 @@ export async function handleGames() {
                         if (gmes[i].homeID != 55) {
                             tm = getTeamfromID(gmes[i].homeID).colors[0];
                         }
-                        const embed = new MessageEmbed()
+                        const embed = new EmbedBuilder()
                             .setTitle(`${gmes[i].awayTeam} @ ${gmes[i].homeTeam}`)
                             .setThumbnail(thumb)
                             .setDescription(
                                 `<t:${Math.floor(gmes[i].dateClass.getTime() / 1000)}>`
                             )
                             .setColor(tm)
-                            .addField("Home Team", `${hmemoji}${gmes[i].homeTeam} (${gmes[i].homeRecord})`, true)
-                            .addField("Away Team", `${awemoji}${gmes[i].awayTeam} (${gmes[i].awayRecord})`, true)
-                            ;
-                        if (!await alreadySent(client.channels.cache.get("1035253775000162374"), embed.title, embed.description)) {
-                            client.channels.cache.get("1035253775000162374").send(embed).then(sentEmbed => {
+                            .addFields(
+                                { name: "Home Team", value: `${hmemoji} ${gmes[i].homeTeam} (${gmes[i].homeRecord})`, inline: true },
+                                { name: "Away Team", value: `${awemoji} ${gmes[i].awayTeam} (${gmes[i].awayRecord})`, inline: true }
+                            );
+                        if (!await alreadySent(client.channels.cache.get("1035253775000162374"), embed.data.title, embed.data.description)) {
+                            client.channels.cache.get("1035253775000162374").send({ embeds: [embed] }).then(sentEmbed => {
                                 var home1 = sentEmbed.embeds[0].title.split("@")[1];
                                 var home = home1.replace("Montréal Canadiens", "Montreal Canadiens").replace(".", "");
                                 var away1 = sentEmbed.embeds[0].title.split("@")[0];

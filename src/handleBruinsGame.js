@@ -1,6 +1,6 @@
 import axios from 'axios';
 const get = axios.get;
-import { MessageEmbed } from 'discord.js';
+import { EmbedBuilder } from 'discord.js';
 import { client, getImgUrl, alreadySent, alreadySentwithFooter,api } from "../index.js";
 import { checkScore } from './checkScore.js';
 import {getTeamfromID} from './getTeam.js'
@@ -76,15 +76,17 @@ async function bruinsPlaying() {
                                             tm = "#99d9d9";
                                         }
                                     }
-                                    const embed = new MessageEmbed()
+                                    const embed = new EmbedBuilder()
                                         .setTitle("Bruins game has ended")
                                         .setDescription(desc)
                                         .setThumbnail(thumb)
                                         .setColor(tm)
-                                        .addField("Boston Bruins", `${bhome}`, false)
-                                        .addField(otherteam, `${baway}`, false);
-                                    if (!await alreadySent(client.channels.cache.get("1035253775000162374"), embed.title, embed.description)) {
-                                        client.channels.cache.get("1035253775000162374").send(embed);
+                                        .addFields(
+                                            { name: "Boston Bruins", value: `${bhome}`, inline: false},
+                                            { name: otherteam, value: `${baway}`, inline: false}
+                                        )
+                                    if (!await alreadySent(client.channels.cache.get("1035253775000162374"), embed.data.title, embed.data.description)) {
+                                        client.channels.cache.get("1035253775000162374").send({ embeds: [embed] });
                                     }
                                     baway = 0;
                                     bhome = 0;
@@ -107,60 +109,69 @@ export async function BruinsGame() {
     if (bgame) {
         if (!currbruinsgame) {
             var thumb = getImgUrl("Boston Bruins".replace(/\s/g, ''));
-            const embed = new MessageEmbed()
+            const embed = new EmbedBuilder()
                 .setTitle(`Bruins game has started!`)
                 .setDescription(`The Bruins are playing the ${otherteam}!`)
-                .addField("Boston Bruins", `(${brecord})`, true)
-                .addField(otherteam, `(${otherteamrecord})`, true)
+                .addFields(
+                    { name: "Boston Bruins", value: `${brecord}`, inline: true },
+                    { name: otherteam, value: `${otherteamrecord}`, inline: true }
+                )
                 .setThumbnail(thumb)
                 .setColor(0xFFB81C)
                 .setTimestamp();
             currbruinsgame = true;
-            if (!await alreadySent(client.channels.cache.get("1035253775000162374"), embed.title, embed.description)) {
-                client.channels.cache.get("1035253775000162374").send(embed);
+            if (!await alreadySent(client.channels.cache.get("1035253775000162374"), embed.data.title, embed.data.description)) {
+                client.channels.cache.get("1035253775000162374").send({ embeds: [embed] });
             }
         }
         id = gameid;
         var score = await checkScore(id);
         setTimeout(BruinsGame, 2000);
         if (score[1] != baway) {
+            var s = (score[1] > baway) ? `The ${otherteam} has scored.` : `The ${otherteam} has had their goal disallowed. LETS GO REFS`;
             baway = score[1];
             var thumb = getImgUrl(otherteam.replace(/\s/g, ''));
             var tm = "#99d9d9";
             if (otherteamid != 55) {
                 tm = getTeamfromID(otherteamid).colors[0];
             }
-            const embed = new MessageEmbed()
-                .setTitle(`The ${otherteam} have scored`)
-                .setDescription(`The ${otherteam} have scored boooo ${bhome}-${baway}`)
+            const embed = new EmbedBuilder()
+                .setTitle(`The ${otherteam} have had a score update`)
+                .setDescription(`${s} ${bhome}-${baway}`)
                 .setThumbnail(thumb)
                 .setColor(tm)
-                .addField("Boston Bruins", `${bhome}`, false)
-                .addField(otherteam, `${baway}`, false)
-                .addField("Period", `${score[3]}`, true)
-                .addField("Time in Period", `${score[4]}`, true)
-                .setFooter("Game ID: " + id + ` ${bhome}-${baway}`)
+                .addFields([
+                    { name: "Boston Bruins", value: `${bhome}`, inline: true },
+                    { name: otherteam, value: `${baway}`, inline: true },
+                    { name: "Period", value: `${score[3]}`, inline: true },
+                    { name: "Time in Period", value: `${score[4]}`, inline: true }
+                ])
+                .setFooter({ text: "Game ID: " + id + ` ${bhome}-${baway}` })
                 .setTimestamp();
             if (!await alreadySentwithFooter(client.channels.cache.get("1035253775000162374"), embed.title, embed.description, embed.footer.text)) {
-                client.channels.cache.get("1035253775000162374").send(embed);
+                client.channels.cache.get("1035253775000162374").send({ embeds: [embed] });
             }
         }
         if (score[0] != bhome) {
+            var s = (score[0] > bhome) ? "The Bruins have scored!" : "The Bruins goal has been repealed BOOO REFS U SUCK";
             bhome = score[0];
             var thumb = getImgUrl("Boston Bruins".replace(/\s/g, ''));
-            const embed = new MessageEmbed()
-                .setTitle(`The Bruins have scored!!!`)
-                .setDescription(`The Bruins have scored!!!  ${bhome}-${baway}`)
+            
+            const embed = new EmbedBuilder()
+                .setTitle(s)
+                .setDescription(`${s} ${bhome}-${baway}`)
                 .setThumbnail(thumb)
-                .addField("Boston Bruins", `${bhome}`, false)
-                .addField(otherteam, `${baway}`, false)
-                .addField("Period", `${score[3]}`, true)
-                .addField("Time in Period", `${score[4]}`, true)
+                .addFields(
+                    { name: "Boston Bruins", value: `${bhome}`, inline: false },
+                    { name: otherteam, value: `${baway}`, inline: false },
+                    { name: "Period", value: `${score[3]}`, inline: true },
+                    { name: "Time in Period", value: `${score[4]}`, inline: true }
+                )
                 .setColor(0xFFB81C)
-                .setFooter("Game ID: " + id + ` ${bhome}-${baway}`)
+                .setFooter({ text: "Game ID: " + id + ` ${bhome}-${baway}` })
                 .setTimestamp();
-            if (!await alreadySentwithFooter(client.channels.cache.get("1035253775000162374"), embed.title, embed.description, embed.footer.text)) {
-                client.channels.cache.get("1035253775000162374").send(embed);
+            if (!await alreadySentwithFooter(client.channels.cache.get("1035253775000162374"), embed.data.title, embed.data.description, embed.footer.text)) {
+                client.channels.cache.get("1035253775000162374").send({ embeds: [embed] });
             }
         }
     } else {

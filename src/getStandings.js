@@ -1,6 +1,6 @@
 import axios from 'axios';
 const get = axios.get;
-import { MessageEmbed } from 'discord.js';
+import { EmbedBuilder } from 'discord.js';
 import { client, api } from '../index.js';
 
 /**
@@ -70,15 +70,17 @@ export async function getStandings() {
             tmp[i] += (j + 1) + "." + `${emoji}${standings[i].teams[j].name}` + " **(" + standings[i].teams[j].wins + "-" + standings[i].teams[j].losses + "-" + standings[i].teams[j].ot + ")** PTS: " + standings[i].teams[j].pts + "\n";
         }
     }
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
         .setThumbnail("https://cdn.bleacherreport.net/images/team_logos/328x328/nhl.png")
-        .setAuthor("NHL Standings", "https://cdn.bleacherreport.net/images/team_logos/328x328/nhl.png")
-        .addField(standings[0].division + " Division\u200B\u200B\u200B", tmp[0], false)
-        .addField(standings[1].division + " Division\u200B\u200B\u200B", tmp[1], false)
-        .addField(standings[2].division + " Division\u200B\u200B\u200B", tmp[2], false)
-        .addField(standings[3].division + " Division\u200B\u200B\u200B", tmp[3], false)
-        .addField("\u200B", "Standings as of " + `<t:${Math.floor(new Date().getTime() / 1000)}>`, false)
-        .setFooter("Data provided by NHL.com", "https://cdn.bleacherreport.net/images/team_logos/328x328/nhl.png")
+        .setAuthor({iconURL: "https://cdn.bleacherreport.net/images/team_logos/328x328/nhl.png", name: "NHL Standings"})
+        .addFields([
+            { name: standings[0].division + " Division\u200B\u200B\u200B", value: tmp[0], inline: false },
+            { name: standings[1].division + " Division\u200B\u200B\u200B", value: tmp[1], inline: false },
+            { name: standings[2].division + " Division\u200B\u200B\u200B", value: tmp[2], inline: false },
+            { name: standings[3].division + " Division\u200B\u200B\u200B", value: tmp[3], inline: false },
+            {name : "\u200B", value :  `Standings as of <t:${Math.floor(new Date().getTime() / 1000)}>`, inline : false}
+        ])
+        .setFooter({ text: "Data provided by NHL.com", iconURL: "https://cdn.bleacherreport.net/images/team_logos/328x328/nhl.png"})
     client.channels.cache.get("1035254730357747805").messages.fetch({ limit: 10 }).then(messages => {
         messages.forEach(message => {
             if (message.author.bot) {
