@@ -84,7 +84,7 @@ export async function getStandings() {
     client.channels.cache.get("1035254730357747805").messages.fetch({ limit: 10 }).then(messages => {
         messages.forEach(message => {
             if (message.author.bot) {
-                message.edit(embed)
+                message.edit({ embeds: [embed] })
             }
         });
     })
