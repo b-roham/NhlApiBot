@@ -1,16 +1,33 @@
 import dotenv from 'dotenv';
-dotenv.config();
-// Dependancies
-import { readFileSync } from "fs";
-import { Client} from "discord.js";
+import { readFileSync, readdirSync } from "fs";
+import { Client, Collection, GatewayIntentBits } from "discord.js";
 import { getStandings } from './src/getStandings.js';
 import { BruinsGame } from './src/handleBruinsGame.js';
 import { handleGames } from './src/handleGames.js';
-// Variables
+const prefix = "!";
+dotenv.config();
 /**
  * @type {discord.Client} - The discord.js client.
  */
-export const client = new Client({intents : 62987});
+export const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers
+  ]
+});
+client.commands = new Collection();
+
+const commandFiles = readdirSync('./commands').filter(file => file.endsWith('.js'));
+
+for (const file of commandFiles) { 
+  
+  const command = await import(`./commands/${file}`);
+
+  client.commands.set(command.name, command);
+}
+
 const token = process.env.TOKEN;
 /**
  * @type {string} The URL of the NHL stats API.       
@@ -18,7 +35,6 @@ const token = process.env.TOKEN;
 export const api = "https://statsapi.web.nhl.com/";
 var raw = readFileSync('imgs.json')
 var content = JSON.parse(raw);
-var length = 0;
 /**
  * Gets the URL of the image with the given name.       
  * @param {string} name - the name of the image.       
@@ -79,11 +95,26 @@ export async function alreadySentwithFooter(channel, title, description, footer)
   });
   return sent;
 }
-
+/**
+ * The main function that runs when the client is ready.  It handles the games, standings, and Bruins game. 
+ */
 client.once("ready", () => {
   handleGames(); 
-  setTimeout(getStandings, 2000);
-  setTimeout(BruinsGame, 2000)
+  getStandings();
+  BruinsGame();
+});
+
+client.on('messageCreate', message => {
+	if (!message.content.startsWith(prefix) || message.author.bot) return;
+	const args = message.content.slice(prefix.length).trim().split(/ +/);
+	const command = args.shift().toLowerCase();
+	if (!client.commands.has(command)) return;
+	try {
+		client.commands.get(command).execute(message, args);
+	} catch (error) {
+		console.error(error);
+		message.reply('there was an error trying to execute that command!');
+	}
 });
 
 StartApp();
