@@ -9,6 +9,7 @@ dotenv.config();
 /**
  * @type {discord.Client} - The discord.js client.
  */
+export const api = "https://statsapi.web.nhl.com/";
 export const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -19,20 +20,10 @@ export const client = new Client({
 });
 client.commands = new Collection();
 
-const commandFiles = readdirSync('./commands').filter(file => file.endsWith('.js'));
-
-for (const file of commandFiles) { 
-  
-  const command = await import(`./commands/${file}`);
-
-  client.commands.set(command.name, command);
-}
-
 const token = process.env.TOKEN;
 /**
  * @type {string} The URL of the NHL stats API.       
  */
-export const api = "https://statsapi.web.nhl.com/";
 var raw = readFileSync('imgs.json')
 var content = JSON.parse(raw);
 /**
@@ -98,10 +89,17 @@ export async function alreadySentwithFooter(channel, title, description, footer)
 /**
  * The main function that runs when the client is ready.  It handles the games, standings, and Bruins game. 
  */
-client.once("ready", () => {
+client.once("ready", async () => {
   handleGames(); 
-  getStandings();
-  BruinsGame();
+  setTimeout(getStandings,2000);
+  setTimeout(BruinsGame, 2000);
+  const commandFiles = readdirSync('./commands').filter(file => file.endsWith('.js'));
+
+  for (const file of commandFiles) {
+    const command = await import(`./commands/${file}`);
+    console.log(file);
+    client.commands.set(command.name, command);
+  }
 });
 
 client.on('messageCreate', message => {
