@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import { readFileSync, readdirSync } from "fs";
-import { Client, Collection, GatewayIntentBits } from "discord.js";
+import { Client, Collection, GatewayIntentBits, Events } from "discord.js";
 import { getStandings } from './src/getStandings.js';
 import { BruinsGame } from './src/handleBruinsGame.js';
 import { handleGames } from './src/handleGames.js';
@@ -94,11 +94,19 @@ client.once("ready", async () => {
   setTimeout(getStandings,2000);
   setTimeout(BruinsGame, 2000);
   const commandFiles = readdirSync('./commands').filter(file => file.endsWith('.js'));
-
+  const slashCommandFiles = readdirSync('./slashCommands').filter(file => file.endsWith('.js'));
   for (const file of commandFiles) {
     const command = await import(`./commands/${file}`);
     console.log(file);
     client.commands.set(command.name, command);
+  }
+  for (const file of slashCommandFiles) {
+    const command = await import(`./slashCommands/${file}`);
+    if ('data' in command && 'execute' in command) {
+      client.commands.set(command.data.name, command);
+    } else {
+      console.log(`[WARNING] The command ./slashCommands/${file} is missing a required "data" or "execute" property.`);
+    }
   }
 });
 
@@ -114,5 +122,17 @@ client.on('messageCreate', message => {
 		message.reply('there was an error trying to execute that command!');
 	}
 });
+
+client.on(Events.InteractionCreate, interaction => {
+  if (!interaction.isCommand()) return;
+  const { commandName } = interaction;
+  if (!client.commands.has(commandName)) return;
+  try {
+    client.commands.get(commandName).execute(interaction);
+  } catch (error) {
+    console.error(error);
+    interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+  }
+})
 
 StartApp();

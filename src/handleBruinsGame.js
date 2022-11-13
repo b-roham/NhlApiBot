@@ -171,7 +171,7 @@ export async function BruinsGame() {
                 .setColor(0xFFB81C)
                 .setFooter({ text: "Game ID: " + id + ` ${bhome}-${baway}` })
                 .setTimestamp();
-            if (!await alreadySentwithFooter(client.channels.cache.get("1035253775000162374"), embed.data.title, embed.data.description, embed.footer.text)) {
+            if (!await alreadySentwithFooter(client.channels.cache.get("1035253775000162374"), embed.data.title, embed.data.description, embed.data.footer.text)) {
                 client.channels.cache.get("1035253775000162374").send({ embeds: [embed] });
             }
         }
