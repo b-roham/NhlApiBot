@@ -14,7 +14,8 @@ var bruinsgame = false;
  */
 export async function handleGames() {
     var gmes = []
-    get(api + "api/v1/schedule").then(async (resp) => {
+    var date = new Date();
+    get(api + "api/v1/schedule?date="+Date.getFullYear()+'-'+(Date.getMonth()+1)+'-'+Date.getDate()).then(async (resp) => {
         setTimeout(handleGames, 600000);
         resp.data.dates.forEach(async (obj) => {
             Object.entries(obj).forEach(async ([key, value]) => {
