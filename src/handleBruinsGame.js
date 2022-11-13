@@ -128,7 +128,7 @@ export async function BruinsGame() {
         var score = await checkScore(id);
         setTimeout(BruinsGame, 2000);
         if (score[1] != baway) {
-            var s = (score[1] > baway) ? `The ${otherteam} has scored.` : `The ${otherteam} has had their goal disallowed. LETS GO REFS`;
+            var s = (score[1] > baway) ? `The ${otherteam} have scored.` : `The ${otherteam} have had their goal disallowed. LETS GO REFS`;
             baway = score[1];
             var thumb = getImgUrl(otherteam.replace(/\s/g, ''));
             var tm = "#99d9d9";
@@ -146,9 +146,10 @@ export async function BruinsGame() {
                     { name: "Period", value: `${score[3]}`, inline: true },
                     { name: "Time in Period", value: `${score[4]}`, inline: true }
                 ])
-                .setFooter({ text: "Game ID: " + id + ` ${bhome}-${baway}` })
+                .setFooter({ text: `Game ID: ${id} ${bhome}-${baway}` })
                 .setTimestamp();
-            if (!await alreadySentwithFooter(client.channels.cache.get("1035253775000162374"), embed.title, embed.description, embed.footer.text)) {
+            console.log(embed);
+            if (!await alreadySentwithFooter(client.channels.cache.get("1035253775000162374"), embed.data.title, embed.data.description, embed.data.footer.text)) {
                 client.channels.cache.get("1035253775000162374").send({ embeds: [embed] });
             }
         }
