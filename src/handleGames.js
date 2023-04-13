@@ -86,4 +86,5 @@ export async function handleGames() {
   }
   var i2 = bruinsgame ? " 1 of which is a bruins game." : "";
   client.user.setActivity(`There are ${length} NHL games today.${i2}`);
+  setTimeout(handleGames, 600000);
 }
