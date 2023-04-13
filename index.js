@@ -4,6 +4,8 @@ import { Client, Collection, GatewayIntentBits, Events } from "discord.js";
 import { getStandings } from './src/getStandings.js';
 import { BruinsGame } from './src/handleBruinsGame.js';
 import { handleGames } from './src/handleGames.js';
+import { getGame } from './src/getGame.js';
+
 const prefix = "!";
 dotenv.config();
 /**
@@ -39,6 +41,7 @@ export function getImgUrl(name){
   }
   return "";
 }
+
 /**
  * Starts the application.
  * @returns None

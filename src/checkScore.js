@@ -1,20 +1,24 @@
-import axios from 'axios';
+import axios from "axios";
+import { EventEmitter } from "events";
+
 const get = axios.get;
 const api = "https://statsapi.web.nhl.com/";
 
 export async function checkScore(gameID) {
-    var homeScore = 0;
-    var awayScore = 0;
-    var currentPeriod;
-    var currentPeriodOrdinal;
-    var currentPeriodTimeRemaining;
-    
-    await get(api + "api/v1/game/" + gameID + "/feed/live").then(async (resp) => {
-      var data = resp.data;
-      currentPeriod = data.liveData.linescore.currentPeriod;
-      currentPeriodOrdinal = data.liveData.linescore.currentPeriodOrdinal;
-      currentPeriodTimeRemaining = data.liveData.linescore.currentPeriodTimeRemaining;
-      Object.entries(resp.data.liveData.linescore).forEach(async ([key, value]) => {
+  var homeScore = 0;
+  var awayScore = 0;
+  var currentPeriod;
+  var currentPeriodOrdinal;
+  var currentPeriodTimeRemaining;
+
+  await get(api + "api/v1/game/" + gameID + "/feed/live").then(async (resp) => {
+    var data = resp.data;
+    currentPeriod = data.liveData.linescore.currentPeriod;
+    currentPeriodOrdinal = data.liveData.linescore.currentPeriodOrdinal;
+    currentPeriodTimeRemaining =
+      data.liveData.linescore.currentPeriodTimeRemaining;
+    Object.entries(resp.data.liveData.linescore).forEach(
+      async ([key, value]) => {
         if (key == "teams") {
           Object.entries(value).forEach(async ([key2, value2]) => {
             if (key2 == "home") {
@@ -43,7 +47,14 @@ export async function checkScore(gameID) {
             }
           });
         }
-      });
-    });
-    return [homeScore, awayScore, currentPeriod, currentPeriodOrdinal, currentPeriodTimeRemaining];
+      }
+    );
+  });
+  return [
+    homeScore,
+    awayScore,
+    currentPeriod,
+    currentPeriodOrdinal,
+    currentPeriodTimeRemaining,
+  ];
 }
