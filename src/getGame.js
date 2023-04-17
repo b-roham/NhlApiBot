@@ -25,8 +25,8 @@ export async function getGame(teamId = -1){
             games[i].teams.home.score, 
             games[i].teams.away.score, 
             games[i].gamePk,
-            games[i].teams.home.leagueRecord.wins + "-" + games[i].teams.home.leagueRecord.losses + "-" + games[i].teams.home.leagueRecord.ot,
-            games[i].teams.away.leagueRecord.wins + "-" + games[i].teams.away.leagueRecord.losses + "-" + games[i].teams.away.leagueRecord.ot,
+            games[i].teams.home.leagueRecord.wins + "-" + games[i].teams.home.leagueRecord.losses,
+            games[i].teams.away.leagueRecord.wins + "-" + games[i].teams.away.leagueRecord.losses,
             games[i].teams.home.team.id,
             games[i].teams.away.team.id,
             games[i].gameDate
